@@ -40,7 +40,6 @@ else
     LIB_NAME=libmklml_gnu.so
 fi
 
-OMP=0
 VERSION_MATCH=20160906
 ARCHIVE_BASENAME=mklml_lnx_2017.0.2.20170209.tgz
 GITHUB_RELEASE_TAG=v0.7
@@ -55,36 +54,42 @@ if [ -z $MKLROOT ] || [ $VERSION_LINE -lt $VERSION_MATCH ]; then
     if [ $VERSION_LINE -lt $VERSION_MATCH ] ; then
 	# download and unpack
         wget --no-check-certificate  -P $PWD $MKLURL -O $PWD/$ARCHIVE_BASENAME
+        if [ $? -ne 0 ]; then
+            echo "[Error]: Download mklml lib file failed..."
+            exit 1
+        fi
         tar -xzf $PWD/$ARCHIVE_BASENAME -C $PWD
-	if [ -d $PWD/$MKL_CONTENT_DIR ]; then
+        if [ $? -ne 0 ]; then
+            echo "[Error]: Unzip mklml lib file failed..."
+            exit 1
+        fi
+        if [ -d $PWD/$MKL_CONTENT_DIR ]; then
             cp -r $PWD/$MKL_CONTENT_DIR/lib/* $DST_LIB
             cp -r $PWD/$MKL_CONTENT_DIR/include/* $DST_INC
-	    rm -rf $PWD/$MKL_CONTENT_DIR
         fi
     fi
-    LOCALMKL=`find $DST -name $LIB_NAME`
+    LOCALMKL=`find $DST -name $LIB_NAME 2>/dev/null`
     MKL_ROOT=`echo $LOCALMKL | sed -e 's/\/lib.*$//'`
 elif [ ! -z "$MKLROOT" ]; then
-    LOCALMKL=`find $MKLROOT -name $LIB_NAME`
+    LOCALMKL=`find $MKLROOT -name $LIB_NAME 2>/dev/null`
     MKL_ROOT=`echo $LOCALMKL | sed -e 's/\/lib.*$//'`
 fi
 
 # If no libmklml_intel.so, search for libmkl_rt.so under MKLROOT
 # Maybe there has several libmkl_rt.so, add -print -quit options to get the first
 if [ -z "$LOCALMKL" ]; then
-    LOCALMKL=`find $MKLROOT -name libmkl_rt.so -print -quit`
+    LOCALMKL=`find $MKLROOT -name libmkl_rt.so -print -quit 2>/dev/null`
     MKL_ROOT=`echo $LOCALMKL | sed -e 's/\/lib.*$//'`
 fi
 
 if [ ! -z "$LOCALMKL" ]; then
     LIBRARIES=`basename $LOCALMKL | sed -e 's/^.*lib//' | sed -e 's/\.so.*$//'`
-    OMP=1
 else
     LIBRARIES="mkl_rt"
     MKL_ROOT=$MKLROOT
 fi
 
 export MKLROOT=$MKL_ROOT
+echo "Successfully set environment for mklml lib..."
 echo $MKL_ROOT
 echo $LIBRARIES
-echo $OMP
