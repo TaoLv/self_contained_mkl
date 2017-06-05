@@ -1,6 +1,6 @@
 # self_contained_mkl
-Download MKL lib and prepare environments.
+This script will check and prepare environment of MKL for Theano.
 
 ```sh
-source get_self_contained_mkl.sh
+source prepare_mkl.sh
 ```

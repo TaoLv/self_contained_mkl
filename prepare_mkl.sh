@@ -13,8 +13,6 @@ echo $VERSION_LINE  # Return Version Line
 }
 
 
-# check directory ~/.local/lib and ~/.local/include
-# libs and include files for MKL-DNN will be copied to these folders
 DST=~/.local
 DST_LIB=$DST/lib
 DST_INC=$DST/include
@@ -33,6 +31,10 @@ if [ ! -d "$DST_INC" ]; then
     mkdir $DST_INC
 fi
 
+export LD_LIBRARY_PATH=$DST_LIB:$LD_LIBRARY_PATH
+export LIBRARY_PATH=$DST_LIB:$LIBRARY_PATH
+export CPATH=$DST_INC:$CPATH
+
 ICC_DIR=`which icc`
 if [ ! -z $ICC_DIR ]; then
     LIB_NAME=libmklml_intel.so
@@ -40,19 +42,17 @@ else
     LIB_NAME=libmklml_gnu.so
 fi
 
-VERSION_MATCH=20160906
-ARCHIVE_BASENAME=mklml_lnx_2017.0.2.20170209.tgz
-GITHUB_RELEASE_TAG=v0.7
+VERSION_MATCH=20170209
+ARCHIVE_BASENAME=mklml_lnx_2018.0.20170425.tgz
+GITHUB_RELEASE_TAG=v0.9
 
 MKLURL="https://github.com/01org/mkl-dnn/releases/download/$GITHUB_RELEASE_TAG/$ARCHIVE_BASENAME"
 MKL_CONTENT_DIR=`echo $ARCHIVE_BASENAME | rev | cut -d "." -f 2- | rev`
 
 VERSION_LINE=`GetVersionName $MKLROOT`
 if [ -z $MKLROOT ] || [ $VERSION_LINE -lt $VERSION_MATCH ]; then
-    # any mkl-dnn lib in ~/.local/ ?
     VERSION_LINE=`GetVersionName $DST`
     if [ $VERSION_LINE -lt $VERSION_MATCH ] ; then
-	# download and unpack
         wget --no-check-certificate  -P $PWD $MKLURL -O $PWD/$ARCHIVE_BASENAME
         if [ $? -ne 0 ]; then
             echo "[Error]: Download mklml lib file failed..."
@@ -60,7 +60,7 @@ if [ -z $MKLROOT ] || [ $VERSION_LINE -lt $VERSION_MATCH ]; then
         fi
         tar -xzf $PWD/$ARCHIVE_BASENAME -C $PWD
         if [ $? -ne 0 ]; then
-            echo "[Error]: Unzip mklml lib file failed..."
+            echo "[Error]: Unpack mklml lib file failed..."
             exit 1
         fi
         if [ -d $PWD/$MKL_CONTENT_DIR ]; then
@@ -75,8 +75,6 @@ elif [ ! -z "$MKLROOT" ]; then
     MKL_ROOT=`echo $LOCALMKL | sed -e 's/\/lib.*$//'`
 fi
 
-# If no libmklml_intel.so, search for libmkl_rt.so under MKLROOT
-# Maybe there has several libmkl_rt.so, add -print -quit options to get the first
 if [ -z "$LOCALMKL" ]; then
     LOCALMKL=`find $MKLROOT -name libmkl_rt.so -print -quit 2>/dev/null`
     MKL_ROOT=`echo $LOCALMKL | sed -e 's/\/lib.*$//'`
@@ -90,6 +88,6 @@ else
 fi
 
 export MKLROOT=$MKL_ROOT
-echo "Successfully set environment for mklml lib..."
+echo "Finish preparing Intel(R) mklml library for Theano..."
 echo $MKL_ROOT
 echo $LIBRARIES
