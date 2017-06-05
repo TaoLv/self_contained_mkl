@@ -54,18 +54,14 @@ if [ -z $MKLROOT ] || [ $VERSION_LINE -lt $VERSION_MATCH ]; then
     VERSION_LINE=`GetVersionName $DST`
     if [ $VERSION_LINE -lt $VERSION_MATCH ] ; then
         wget --no-check-certificate  -P $PWD $MKLURL -O $PWD/$ARCHIVE_BASENAME
-        if [ $? -ne 0 ]; then
-            echo "[Error]: Download mklml lib file failed..."
-            exit 1
-        fi
         tar -xzf $PWD/$ARCHIVE_BASENAME -C $PWD
-        if [ $? -ne 0 ]; then
-            echo "[Error]: Unpack mklml lib file failed..."
-            exit 1
-        fi
+
         if [ -d $PWD/$MKL_CONTENT_DIR ]; then
             cp -r $PWD/$MKL_CONTENT_DIR/lib/* $DST_LIB
             cp -r $PWD/$MKL_CONTENT_DIR/include/* $DST_INC
+        else
+            echo "[Error]: Failed to download or unpach mklml library"
+            exit 1
         fi
     fi
     LOCALMKL=`find $DST -name $LIB_NAME 2>/dev/null`
